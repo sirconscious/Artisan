@@ -164,7 +164,7 @@ export default function PostJobPage() {
         return false
       }
     }
-
+    console.log(formData);
     return true
   }
 

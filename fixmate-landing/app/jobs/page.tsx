@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Filter, Search, X, ChevronDown, Zap, Paintbrush, Droplets, Hammer, Home } from "lucide-react"
+import { Filter, Search, X, ChevronDown, Zap, Paintbrush, Droplets, Hammer, Home , Plus} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { NavBar } from "@/components/nav-bar"
+import axios from "axios"
 
 // Mock data for jobs
 const mockJobs = [
@@ -18,7 +19,7 @@ const mockJobs = [
     id: 1,
     title: "Fix leaky faucet",
     category: "Plumbing",
-    location: "Brooklyn, NY",
+    location: "Marrakech",
     price: "$80 - $120",
     description: "Need someone to fix a leaky faucet in my bathroom. It's been dripping for a week and getting worse.",
     postedDate: "2 days ago",
@@ -30,7 +31,7 @@ const mockJobs = [
     id: 2,
     title: "Install ceiling fan",
     category: "Electrical",
-    location: "Queens, NY",
+    location: "Marrakech",
     price: "$150 - $200",
     description: "Need a ceiling fan installed in my bedroom. I have the fan already, just need installation.",
     postedDate: "1 day ago",
@@ -42,7 +43,7 @@ const mockJobs = [
     id: 3,
     title: "Build custom bookshelf",
     category: "Carpentry",
-    location: "Manhattan, NY",
+    location: "Marrakech",
     price: "$300 - $500",
     description:
       "Looking for a carpenter to build a custom bookshelf for my living room. Approximately 6ft tall by 4ft wide.",
@@ -55,7 +56,7 @@ const mockJobs = [
     id: 4,
     title: "Paint living room",
     category: "Painting",
-    location: "Bronx, NY",
+    location: "Marrakech",
     price: "$400 - $600",
     description: "Need my living room painted (approximately 15x20 feet). Walls only, ceiling was recently done.",
     postedDate: "5 days ago",
@@ -67,7 +68,7 @@ const mockJobs = [
     id: 5,
     title: "Fix garbage disposal",
     category: "Plumbing",
-    location: "Staten Island, NY",
+    location: "Marrakech",
     price: "$100 - $150",
     description: "Garbage disposal is jammed and making a humming noise. Need it fixed or replaced.",
     postedDate: "1 day ago",
@@ -79,7 +80,7 @@ const mockJobs = [
     id: 6,
     title: "Replace light fixtures",
     category: "Electrical",
-    location: "Brooklyn, NY",
+    location: "Marrakech",
     price: "$200 - $300",
     description: "Need to replace 4 outdated light fixtures throughout my apartment with new ones I've purchased.",
     postedDate: "4 days ago",
@@ -91,7 +92,7 @@ const mockJobs = [
     id: 7,
     title: "Assemble IKEA furniture",
     category: "Carpentry",
-    location: "Queens, NY",
+    location: "Marrakech",
     price: "$120 - $180",
     description: "Need help assembling several pieces of IKEA furniture: bed frame, dresser, and desk.",
     postedDate: "2 days ago",
@@ -103,7 +104,7 @@ const mockJobs = [
     id: 8,
     title: "Deep clean apartment",
     category: "Cleaning",
-    location: "Manhattan, NY",
+    location: "Marrakech",
     price: "$150 - $250",
     description:
       "Need a thorough deep cleaning of my 2-bedroom apartment, including kitchen, bathrooms, and all floors.",
@@ -116,7 +117,7 @@ const mockJobs = [
     id: 9,
     title: "Fix deck railing",
     category: "Carpentry",
-    location: "Bronx, NY",
+    location: "Marrakech",
     price: "$250 - $350",
     description:
       "Several posts on my deck railing are loose and need to be secured. About 10 feet of railing affected.",
@@ -129,7 +130,7 @@ const mockJobs = [
     id: 10,
     title: "Install bathroom vanity",
     category: "Plumbing",
-    location: "Staten Island, NY",
+    location: "Marrakech",
     price: "$300 - $400",
     description: "Need to replace old bathroom vanity with a new one. Includes sink and faucet installation.",
     postedDate: "5 days ago",
@@ -208,13 +209,29 @@ const JobDetailsModal = ({ job, isOpen, onClose }: { job: any; isOpen: boolean; 
   </Dialog>
 )
 
-export default function JobsPage() { 
+export default function JobsPage() {   
+  const checkAuth = async(token : string)=>{ 
+    try {
+      const response = await axios(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }) ;
+      
+    } catch (error) {
+      window.location.href = "/login"
+    }
+  }
   const [show ,setShow] = useState(false)
-  useEffect(() => {
-    const token = localStorage.getItem("token")
+  useEffect( () => {
+    const token = localStorage.getItem("token") 
+    
     if (!token) {
       window.location.href = "/login"
-    } 
+    }else{
+
+      checkAuth(token);
+    }
     setShow(true)
   })
   const [selectedJob, setSelectedJob] = useState<any>(null)
@@ -255,7 +272,9 @@ export default function JobsPage() {
   const toggleMobileFilter = () => {
     setIsMobileFilterOpen(!isMobileFilterOpen)
   }
-
+  const redirect = () => {
+    window.location.href = "/post-job"
+  }
   return (
     <>
     
@@ -268,7 +287,13 @@ export default function JobsPage() {
               <h1 className="text-3xl font-bold">Available Jobs</h1>
               <p className="text-muted-foreground">Find and apply for home service jobs in your area</p>
             </div>
-  
+          <button onClick={redirect} className="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> 
+            
+            <div className="flex items-center">
+
+             <Plus /> Drop job
+
+            </div></button>
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Mobile filter toggle */}
               <div className="lg:hidden flex justify-between items-center mb-4">
