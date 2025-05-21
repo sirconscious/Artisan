@@ -478,13 +478,13 @@ export default function AboutPage() {
 
             <motion.div
               variants={fadeIn}
-              className="absolute bottom-12 left-1/2 -translate-x-1/2 transform"
+              className="absolute bottom-[18%]   left-[48%] -translate-x-1/2 transform"
               style={{ opacity, y, scale }}
             >
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col  items-center">
                 <span className="mb-2 text-sm text-muted-foreground">Scroll to explore</span>
                 <motion.div
-                  className="h-12 w-7 rounded-full border border-blue-200 p-1"
+                  className="h-12 w-7 rounded-full border border-blue-200 p-3"
                   animate={{ y: [0, 5, 0] }}
                   transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
                 >

@@ -49,7 +49,7 @@ export function NavBar() {
           <Link href="/jobs" className="text-sm font-medium hover:text-blue-600 transition-colors">
             Jobs
           </Link>
-          <Link href="#" className="text-sm font-medium hover:text-blue-600 transition-colors">
+          <Link href="/how" className="text-sm font-medium hover:text-blue-600 transition-colors">
             How It Works
           </Link>
           <Link href="/about" className="text-sm font-medium hover:text-blue-600 transition-colors">
@@ -101,7 +101,7 @@ export function NavBar() {
                   Jobs
                 </Link>
                 <Link
-                  href="#"
+                  href="/how"
                   className="text-lg font-medium hover:text-blue-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >

@@ -49,7 +49,7 @@ import { JobCalendar } from "@/components/job-calendar"
 
 // Mock data
 const profileData = {
-  name: "Thomas Dubois",
+  name: "Mehdi El bakouri",
   profession: "Plombier & Électricien",
   avatar: "/placeholder.svg?height=200&width=200",
   rating: 4.9,
@@ -420,11 +420,11 @@ export default function Dashboard() {
               <Calendar className="h-5 w-5" />
               <span>Calendrier</span>
             </Button>
-            <Button variant="ghost" className="justify-start gap-3 px-3">
+            <Button onClick={()=>{window.location.href="/dashboard/earnings"}}  variant="ghost" className="justify-start gap-3 px-3">
               <TrendingUp className="h-5 w-5" />
               <span>Revenus</span>
             </Button>
-            <Button variant="ghost" className="justify-start gap-3 px-3">
+            <Button onClick={()=>{window.location.href="/dashboard/messages"}} variant="ghost" className="justify-start gap-3 px-3">
               <MessageSquare className="h-5 w-5" />
               <span>Messages</span>
             </Button>
@@ -811,7 +811,7 @@ export default function Dashboard() {
                   </Tabs>
                 </CardContent>
                 <CardFooter className="border-t pt-4">
-                  <Button variant="outline" className="w-full">
+                  <Button onClick={()=> { window.location.href = "/dashboard/earnings"}} variant="outline" className="w-full">
                     Voir rapport détaillé
                   </Button>
                 </CardFooter>
@@ -929,8 +929,8 @@ export default function Dashboard() {
             <MessageSquare className="h-5 w-5" />
             <span className="mt-1 text-xs">Messages</span>
           </Button>
-          <Button variant="ghost" className="flex flex-1 flex-col items-center justify-center py-3">
-            <TrendingUp className="h-5 w-5" />
+          <Button  variant="ghost" className="flex flex-1 flex-col items-center justify-center py-3">
+            <TrendingUp  className="h-5 w-5" />
             <span className="mt-1 text-xs">Revenus</span>
           </Button>
           <Button variant="ghost" className="flex flex-1 flex-col items-center justify-center py-3">
