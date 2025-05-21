@@ -1,439 +1,818 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Filter, Search, X, ChevronDown, Zap, Paintbrush, Droplets, Hammer, Home , Plus} from "lucide-react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { Filter, Grid3X3, ListFilter, Plus, Search, SlidersHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { JobFilters } from "@/components/job-filters"
+import { JobCard } from "@/components/job-card"
+import { JobList } from "@/components/job-list"
+import { CategoryPills } from "@/components/category-pills"
 import { NavBar } from "@/components/nav-bar"
-import axios from "axios"
+
+// Categories for filtering
+const categories = [
+  { name: "All Categories", icon: "🔍" },
+  { name: "Cleaning", icon: "✨" },
+  { name: "Gardening", icon: "🌱" },
+  { name: "Plumbing", icon: "🔧" },
+  { name: "Electrical", icon: "⚡" },
+  { name: "Childcare", icon: "👶" },
+  { name: "Moving", icon: "📦" },
+  { name: "Cooking", icon: "🍳" },
+  { name: "Pet Care", icon: "🐾" },
+  { name: "Tutoring", icon: "📚" },
+  { name: "Handyman", icon: "🔨" },
+  { name: "Other", icon: "🔍" },
+]
 
 // Mock data for jobs
-const mockJobs = [
+const jobsData = [
   {
-    id: 1,
-    title: "Fix leaky faucet",
-    category: "Plumbing",
-    location: "Marrakech",
-    price: "$80 - $120",
-    description: "Need someone to fix a leaky faucet in my bathroom. It's been dripping for a week and getting worse.",
-    postedDate: "2 days ago",
-    icon: <Droplets className="h-5 w-5" />,
-    longDescription:
-      "The bathroom sink faucet has been leaking steadily for about a week. The leak seems to be coming from the base of the faucet handle. I've tried tightening it but that didn't help. Looking for an experienced plumber who can diagnose and fix the issue. Preferably someone who can bring replacement parts if needed. Available weekdays after 5pm or weekends.",
-  },
-  {
-    id: 2,
-    title: "Install ceiling fan",
-    category: "Electrical",
-    location: "Marrakech",
-    price: "$150 - $200",
-    description: "Need a ceiling fan installed in my bedroom. I have the fan already, just need installation.",
-    postedDate: "1 day ago",
-    icon: <Zap className="h-5 w-5" />,
-    longDescription:
-      "I recently purchased a Hunter ceiling fan for my master bedroom and need it professionally installed. There is an existing light fixture in the ceiling that needs to be replaced with the fan. The ceiling is about 9 feet high, so a ladder will be needed. I'd like the installation to include connecting it to the existing wall switch. The fan comes with a remote control as well. Looking for someone with experience installing ceiling fans who can ensure it's properly balanced and secure.",
-  },
-  {
-    id: 3,
-    title: "Build custom bookshelf",
-    category: "Carpentry",
-    location: "Marrakech",
-    price: "$300 - $500",
-    description:
-      "Looking for a carpenter to build a custom bookshelf for my living room. Approximately 6ft tall by 4ft wide.",
-    postedDate: "3 days ago",
-    icon: <Hammer className="h-5 w-5" />,
-    longDescription:
-      "I need a custom bookshelf built for my living room. The dimensions should be approximately 6ft tall by 4ft wide, with adjustable shelves. I prefer a modern design with clean lines, painted white to match my existing decor. The bookshelf should be sturdy enough to hold books and some decorative items. I'm flexible on the exact design and open to suggestions from an experienced carpenter. The space has been measured and is ready for the installation. Materials can be discussed, but I prefer high-quality wood that will last for years.",
-  },
-  {
-    id: 4,
-    title: "Paint living room",
-    category: "Painting",
-    location: "Marrakech",
-    price: "$400 - $600",
-    description: "Need my living room painted (approximately 15x20 feet). Walls only, ceiling was recently done.",
-    postedDate: "5 days ago",
-    icon: <Paintbrush className="h-5 w-5" />,
-    longDescription:
-      "Looking for a professional painter to paint my living room. The room is approximately 15x20 feet with 9-foot ceilings. Only the walls need to be painted as the ceiling was recently done. There are a few minor wall imperfections that will need to be patched before painting. I've already purchased the paint (Benjamin Moore, eggshell finish) in a light gray color. The room has standard trim work around doors and windows that will need to be carefully edged. Furniture will be moved to the center of the room and covered. I'm looking for someone who pays attention to detail and can complete the job in 1-2 days.",
-  },
-  {
-    id: 5,
-    title: "Fix garbage disposal",
-    category: "Plumbing",
-    location: "Marrakech",
-    price: "$100 - $150",
-    description: "Garbage disposal is jammed and making a humming noise. Need it fixed or replaced.",
-    postedDate: "1 day ago",
-    icon: <Droplets className="h-5 w-5" />,
-    longDescription:
-      "My kitchen garbage disposal is jammed and making a humming noise when turned on. I've tried the reset button and using an Allen wrench in the bottom, but it's still not working properly. I need someone to either fix the existing unit or replace it if necessary. If replacement is needed, I'd prefer a similar model to my current InSinkErator Badger 5, 1/2 HP. I'm flexible with scheduling and can be available any weekday after 4pm or anytime on weekends.",
-  },
-  {
-    id: 6,
-    title: "Replace light fixtures",
-    category: "Electrical",
-    location: "Marrakech",
-    price: "$200 - $300",
-    description: "Need to replace 4 outdated light fixtures throughout my apartment with new ones I've purchased.",
-    postedDate: "4 days ago",
-    icon: <Zap className="h-5 w-5" />,
-    longDescription:
-      "I have purchased 4 new light fixtures (2 ceiling mounted lights for the bedrooms, 1 pendant light for the dining area, and 1 vanity light for the bathroom) and need them installed to replace the outdated fixtures currently in my apartment. All wiring is already in place, so this should be a straightforward replacement job. I'll need the old fixtures removed and disposed of as well. The ceiling height is standard, about 8 feet. Looking for an experienced electrician who can complete all installations in one visit. Safety and proper installation are my top priorities.",
-  },
-  {
-    id: 7,
-    title: "Assemble IKEA furniture",
-    category: "Carpentry",
-    location: "Marrakech",
-    price: "$120 - $180",
-    description: "Need help assembling several pieces of IKEA furniture: bed frame, dresser, and desk.",
-    postedDate: "2 days ago",
-    icon: <Hammer className="h-5 w-5" />,
-    longDescription:
-      "I recently purchased several pieces of IKEA furniture for my new apartment and need help assembling them. The items include a MALM bed frame with 4 drawers, a HEMNES 8-drawer dresser, and a MICKE desk. All items are still in their original packaging. I have all the necessary tools for assembly, including a drill, screwdrivers, and Allen wrenches. Looking for someone experienced with IKEA furniture assembly who can work efficiently and ensure everything is properly put together. The apartment is on the 3rd floor with elevator access.",
-  },
-  {
-    id: 8,
-    title: "Deep clean apartment",
+    id: "1",
+    title: "House Cleaning - 3 Bedroom Home",
     category: "Cleaning",
-    location: "Marrakech",
-    price: "$150 - $250",
+    location: "Paris, France",
+    rate: "€25/hour",
+    rateValue: 25,
     description:
-      "Need a thorough deep cleaning of my 2-bedroom apartment, including kitchen, bathrooms, and all floors.",
+      "Looking for a thorough house cleaning for a 3-bedroom home. Tasks include dusting, vacuuming, mopping, bathroom cleaning, and kitchen cleaning.",
+    postedBy: "Marie Dupont",
+    postedDate: "2 days ago",
+    postedTimestamp: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
+    urgency: "Normal",
+    estimatedHours: "4-5 hours",
+    applications: 3,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.8,
+    reviews: 24,
+    jobType: "One-time",
+    experienceLevel: "Entry Level",
+    distance: 8, // in km
+  },
+  {
+    id: "2",
+    title: "Garden Maintenance - Weekly Service",
+    category: "Gardening",
+    location: "Lyon, France",
+    rate: "€30/hour",
+    rateValue: 30,
+    description:
+      "Need a gardener for weekly maintenance of a medium-sized garden. Tasks include lawn mowing, weeding, pruning, and general upkeep.",
+    postedBy: "Jean Martin",
     postedDate: "1 day ago",
-    icon: <Home className="h-5 w-5" />,
-    longDescription:
-      "I'm looking for a thorough deep cleaning of my 2-bedroom, 1-bathroom apartment (approximately 900 sq ft). The cleaning should include: kitchen (inside of oven, refrigerator, microwave, cabinets, countertops), bathroom (shower/tub, toilet, sink, mirror, tiles), dusting all surfaces, vacuuming and mopping all floors, window sills, and baseboards. I will provide all cleaning supplies and equipment. The apartment is generally tidy but hasn't had a deep clean in several months. I'm looking for someone with attention to detail who can make everything spotless. This is potentially a recurring job if I'm satisfied with the service.",
+    postedTimestamp: Date.now() - 1 * 24 * 60 * 60 * 1000, // 1 day ago
+    urgency: "High",
+    estimatedHours: "3 hours/week",
+    applications: 5,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.5,
+    reviews: 18,
+    jobType: "Recurring",
+    experienceLevel: "Intermediate",
+    distance: 15, // in km
   },
   {
-    id: 9,
-    title: "Fix deck railing",
-    category: "Carpentry",
-    location: "Marrakech",
-    price: "$250 - $350",
-    description:
-      "Several posts on my deck railing are loose and need to be secured. About 10 feet of railing affected.",
-    postedDate: "3 days ago",
-    icon: <Hammer className="h-5 w-5" />,
-    longDescription:
-      "The railing on my backyard deck has become loose in several places. Approximately 10 feet of railing is affected, with 3-4 posts that need to be properly secured. The deck is about 4 feet off the ground, so safety is a primary concern. The existing railing is wooden and about 10 years old. Some wood may need to be replaced if it's rotted. I'd prefer to maintain the current style of the railing if possible. Looking for someone with experience in deck repair who can ensure the railing is safe and up to code. The job will require power tools, which the contractor should provide.",
-  },
-  {
-    id: 10,
-    title: "Install bathroom vanity",
+    id: "3",
+    title: "Plumbing Repair - Leaking Faucet",
     category: "Plumbing",
-    location: "Marrakech",
-    price: "$300 - $400",
-    description: "Need to replace old bathroom vanity with a new one. Includes sink and faucet installation.",
+    location: "Marseille, France",
+    rate: "€40/hour",
+    rateValue: 40,
+    description: "Urgent repair needed for a leaking kitchen faucet. Professional plumber required with own tools.",
+    postedBy: "Sophie Bernard",
+    postedDate: "5 hours ago",
+    postedTimestamp: Date.now() - 5 * 60 * 60 * 1000, // 5 hours ago
+    urgency: "Urgent",
+    estimatedHours: "1-2 hours",
+    applications: 2,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.9,
+    reviews: 32,
+    jobType: "One-time",
+    experienceLevel: "Expert",
+    distance: 22, // in km
+  },
+  {
+    id: "4",
+    title: "Electrical Installation - New Light Fixtures",
+    category: "Electrical",
+    location: "Toulouse, France",
+    rate: "€45/hour",
+    rateValue: 45,
+    description:
+      "Need an electrician to install 5 new light fixtures throughout the house. Must be certified and have experience.",
+    postedBy: "Pierre Dubois",
+    postedDate: "3 days ago",
+    postedTimestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, // 3 days ago
+    urgency: "Normal",
+    estimatedHours: "3-4 hours",
+    applications: 4,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.7,
+    reviews: 15,
+    jobType: "One-time",
+    experienceLevel: "Expert",
+    distance: 5, // in km
+  },
+  {
+    id: "5",
+    title: "Babysitting - Weekday Evenings",
+    category: "Childcare",
+    location: "Nice, France",
+    rate: "€18/hour",
+    rateValue: 18,
+    description:
+      "Looking for a reliable babysitter for two children (ages 5 and 7) on weekday evenings from 6pm to 9pm. Experience and references required.",
+    postedBy: "Claire Moreau",
+    postedDate: "1 week ago",
+    postedTimestamp: Date.now() - 7 * 24 * 60 * 60 * 1000, // 1 week ago
+    urgency: "Normal",
+    estimatedHours: "15 hours/week",
+    applications: 8,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.6,
+    reviews: 27,
+    jobType: "Recurring",
+    experienceLevel: "Intermediate",
+    distance: 12, // in km
+  },
+  {
+    id: "6",
+    title: "Moving Assistance - Small Apartment",
+    category: "Moving",
+    location: "Bordeaux, France",
+    rate: "€22/hour",
+    rateValue: 22,
+    description:
+      "Need help moving from a small 1-bedroom apartment to a new location. Tasks include lifting furniture and boxes. Moving date is next Saturday.",
+    postedBy: "Thomas Petit",
+    postedDate: "4 days ago",
+    postedTimestamp: Date.now() - 4 * 24 * 60 * 60 * 1000, // 4 days ago
+    urgency: "High",
+    estimatedHours: "5-6 hours",
+    applications: 6,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.4,
+    reviews: 12,
+    jobType: "One-time",
+    experienceLevel: "Entry Level",
+    distance: 18, // in km
+  },
+  {
+    id: "7",
+    title: "Pet Sitting - Weekend Trip",
+    category: "Pet Care",
+    location: "Lille, France",
+    rate: "€20/hour",
+    rateValue: 20,
+    description:
+      "Need someone to take care of two cats over a weekend. Responsibilities include feeding, cleaning litter boxes, and playing with the cats.",
+    postedBy: "Emilie Laurent",
+    postedDate: "2 days ago",
+    postedTimestamp: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
+    urgency: "Normal",
+    estimatedHours: "2 hours/day",
+    applications: 4,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.7,
+    reviews: 9,
+    jobType: "One-time",
+    experienceLevel: "Entry Level",
+    distance: 10, // in km
+  },
+  {
+    id: "8",
+    title: "Math Tutoring - High School Level",
+    category: "Tutoring",
+    location: "Strasbourg, France",
+    rate: "€35/hour",
+    rateValue: 35,
+    description:
+      "Looking for a math tutor for a high school student struggling with calculus. Sessions would be twice a week for 1.5 hours each.",
+    postedBy: "Philippe Martin",
     postedDate: "5 days ago",
-    icon: <Droplets className="h-5 w-5" />,
-    longDescription:
-      "I've purchased a new bathroom vanity (36\" wide with a cultured marble top) and need it installed to replace my old, damaged one. The job includes removing the old vanity, installing the new one, connecting the sink drain and water supply lines, and installing the new faucet that came with the vanity. The bathroom has easy access and the water shutoff valves are functioning properly. I'd like the old vanity hauled away if possible. Looking for someone with experience in both plumbing and light carpentry who can ensure everything is level, properly sealed, and without leaks. Preferably someone who can complete the job in one day.",
+    postedTimestamp: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
+    urgency: "Normal",
+    estimatedHours: "3 hours/week",
+    applications: 3,
+    status: "Open",
+    image: "/placeholder.svg?height=100&width=100",
+    rating: 4.9,
+    reviews: 21,
+    jobType: "Recurring",
+    experienceLevel: "Expert",
+    distance: 7, // in km
   },
 ]
 
-// Job card component
-const JobCard = ({ job, onClick }: { job: any; onClick: () => void }) => (
-  <Card className="overflow-hidden transition-all hover:shadow-md">
-    <CardContent className="p-6">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-            {job.icon}
-          </div>
-          <div>
-            <h3 className="font-bold">{job.title}</h3>
-            <p className="text-sm text-muted-foreground">{job.location}</p>
-          </div>
-        </div>
-        <Badge variant="outline" className="bg-blue-50">
-          {job.category}
-        </Badge>
-      </div>
-      <p className="mt-4 text-sm">{job.description}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <p className="font-medium text-blue-600">{job.price}</p>
-        <p className="text-xs text-muted-foreground">Posted {job.postedDate}</p>
-      </div>
-    </CardContent>
-    <CardFooter className="p-0">
-      <Button variant="ghost" className="w-full rounded-none py-4 text-blue-600 hover:bg-blue-50" onClick={onClick}>
-        View Details
-      </Button>
-    </CardFooter>
-  </Card>
-)
+export default function JobsPage() {
+  // State for search query
+  const [searchQuery, setSearchQuery] = useState("")
 
-// Job details modal component
-const JobDetailsModal = ({ job, isOpen, onClose }: { job: any; isOpen: boolean; onClose: () => void }) => (
-  <Dialog open={isOpen} onOpenChange={onClose}>
-    <DialogContent className="sm:max-w-[500px]">
-      <DialogHeader>
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-            {job.icon}
-          </div>
-          <DialogTitle>{job.title}</DialogTitle>
-        </div>
-        <DialogDescription className="flex items-center justify-between pt-2">
-          <Badge variant="outline" className="bg-blue-50">
-            {job.category}
-          </Badge>
-          <span className="text-xs text-muted-foreground">Posted {job.postedDate}</span>
-        </DialogDescription>
-      </DialogHeader>
-      <div className="grid gap-4">
-        <div>
-          <h4 className="mb-2 text-sm font-medium">Location</h4>
-          <p className="text-sm">{job.location}</p>
-        </div>
-        <div>
-          <h4 className="mb-2 text-sm font-medium">Budget</h4>
-          <p className="text-sm font-semibold text-blue-600">{job.price}</p>
-        </div>
-        <div>
-          <h4 className="mb-2 text-sm font-medium">Description</h4>
-          <p className="text-sm">{job.longDescription}</p>
-        </div>
-        <Button className="mt-4 w-full bg-blue-600 hover:bg-blue-700">Apply for this Job</Button>
-      </div>
-    </DialogContent>
-  </Dialog>
-)
-
-export default function JobsPage() {   
-  const checkAuth = async(token : string)=>{ 
-    try {
-      const response = await axios(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }) ;
-      
-    } catch (error) {
-      window.location.href = "/login"
-    }
-  }
-  const [show ,setShow] = useState(false)
-  useEffect( () => {
-    const token = localStorage.getItem("token") 
-    
-    if (!token) {
-      window.location.href = "/login"
-    }else{
-
-      checkAuth(token);
-    }
-    setShow(true)
-  })
-  const [selectedJob, setSelectedJob] = useState<any>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
-  const [priceRange, setPriceRange] = useState([0, 500])
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
-  const [locationFilter, setLocationFilter] = useState<string>("")
-
-
-
-  // Filter jobs based on selected filters
-  const filteredJobs = mockJobs.filter((job) => {
-    // Filter by category
-    if (categoryFilter !== "all" && job.category !== categoryFilter) {
-      return false
-    }
-
-    // Filter by location (simple includes check)
-    if (locationFilter && !job.location.toLowerCase().includes(locationFilter.toLowerCase())) {
-      return false
-    }
-
-    // Filter by price range (simplified for demo)
-    const jobMinPrice = Number.parseInt(job.price.split(" - ")[0].replace(/\D/g, ""))
-    return jobMinPrice >= priceRange[0]
+  // State for filters
+  const [filters, setFilters] = useState({
+    categories: [],
+    location: "",
+    distance: 25,
+    priceRange: [5, 100],
+    urgency: [],
+    datePosted: "",
+    jobType: [],
+    experienceLevel: [],
   })
 
-  const openJobDetails = (job: any) => {
-    setSelectedJob(job)
-    setIsModalOpen(true)
+  // State for filtered jobs
+  const [filteredJobs, setFilteredJobs] = useState(jobsData)
+
+  // State for selected category from pills
+  const [selectedCategory, setSelectedCategory] = useState("All Categories")
+
+  // Apply filters when filters state changes
+  useEffect(() => {
+    let result = [...jobsData]
+
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(
+        (job) =>
+          job.title.toLowerCase().includes(query) ||
+          job.description.toLowerCase().includes(query) ||
+          job.category.toLowerCase().includes(query) ||
+          job.location.toLowerCase().includes(query),
+      )
+    }
+
+    // Apply category filter from pills or filter panel
+    if (selectedCategory && selectedCategory !== "All Categories") {
+      result = result.filter((job) => job.category === selectedCategory)
+    } else if (filters.categories.length > 0) {
+      result = result.filter((job) => filters.categories.includes(job.category))
+    }
+
+    // Apply location filter
+    if (filters.location) {
+      result = result.filter((job) => job.location.toLowerCase().includes(filters.location.toLowerCase()))
+    }
+
+    // Apply distance filter
+    if (filters.distance) {
+      result = result.filter((job) => job.distance <= filters.distance)
+    }
+
+    // Apply price range filter
+    if (filters.priceRange) {
+      result = result.filter((job) => job.rateValue >= filters.priceRange[0] && job.rateValue <= filters.priceRange[1])
+    }
+
+    // Apply urgency filter
+    if (filters.urgency.length > 0) {
+      result = result.filter((job) => filters.urgency.includes(job.urgency))
+    }
+
+    // Apply date posted filter
+    if (filters.datePosted) {
+      const now = Date.now()
+      let timeThreshold
+
+      switch (filters.datePosted) {
+        case "24h":
+          timeThreshold = now - 24 * 60 * 60 * 1000 // 24 hours
+          break
+        case "week":
+          timeThreshold = now - 7 * 24 * 60 * 60 * 1000 // 7 days
+          break
+        case "month":
+          timeThreshold = now - 30 * 24 * 60 * 60 * 1000 // 30 days
+          break
+        default:
+          timeThreshold = 0
+      }
+
+      if (timeThreshold > 0) {
+        result = result.filter((job) => job.postedTimestamp >= timeThreshold)
+      }
+    }
+
+    // Apply job type filter
+    if (filters.jobType.length > 0) {
+      result = result.filter((job) => filters.jobType.includes(job.jobType))
+    }
+
+    // Apply experience level filter
+    if (filters.experienceLevel.length > 0) {
+      result = result.filter((job) => filters.experienceLevel.includes(job.experienceLevel))
+    }
+
+    setFilteredJobs(result)
+  }, [searchQuery, filters, selectedCategory])
+
+  // Handle category selection from pills
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category)
+    // Reset category filters in the filter panel
+    setFilters({
+      ...filters,
+      categories: [],
+    })
   }
 
-  const closeJobDetails = () => {
-    setIsModalOpen(false)
+  // Handle search input
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
   }
 
-  const toggleMobileFilter = () => {
-    setIsMobileFilterOpen(!isMobileFilterOpen)
+  // Reset all filters
+  const resetFilters = () => {
+    setFilters({
+      categories: [],
+      location: "",
+      distance: 25,
+      priceRange: [5, 100],
+      urgency: [],
+      datePosted: "",
+      jobType: [],
+      experienceLevel: [],
+    })
+    setSelectedCategory("All Categories")
+    setSearchQuery("")
   }
-  const redirect = () => {
-    window.location.href = "/post-job"
-  }
+
+  // Featured jobs (top 3 by rating)
+  const featuredJobs = [...jobsData].sort((a, b) => b.rating - a.rating).slice(0, 3)
+
   return (
-    <>
-    
-    {show && (
-      <div className="flex min-h-screen flex-col">
-        <NavBar />
-        <main className="flex-1 bg-gray-50">
-          <div className="container px-4 py-8 md:px-6">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold">Available Jobs</h1>
-              <p className="text-muted-foreground">Find and apply for home service jobs in your area</p>
-            </div>
-          <button onClick={redirect} className="bg-blue-500  hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> 
-            
-            <div className="flex items-center">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <NavBar />
+      {/* Hero section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0  z-0"></div>
+        <div
+          className="absolute inset-0 z-0 opacity-30"
+          style={{
+            backgroundImage: "url('/images/hero.jpeg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-600/50 z-0"></div>
 
-             <Plus /> Drop job
+        <div className="container relative z-10 mx-auto py-16 px-4 sm:py-24">
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-md">
+              Find the Perfect Service Provider
+            </h1>
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+              Connect with skilled professionals for all your home service needs
+            </p>
 
-            </div></button>
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Mobile filter toggle */}
-              <div className="lg:hidden flex justify-between items-center mb-4">
-                <Button variant="outline" onClick={toggleMobileFilter} className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                  {isMobileFilterOpen ? (
-                    <ChevronDown className="h-4 w-4 rotate-180" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+            <div className="relative mt-8 max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-grow">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-blue-300" />
+                  </div>
+                  <Input
+                    type="search"
+                    placeholder="What service do you need?"
+                    className="pl-10 h-14 rounded-lg border-0 bg-white/95 backdrop-blur-sm text-blue-950 placeholder:text-blue-400 focus-visible:ring-2 focus-visible:ring-white shadow-lg w-full"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+                <Button className="h-14 rounded-lg bg-blue-500 hover:bg-blue-600 text-white px-8 shadow-lg text-base font-medium">
+                  Search
                 </Button>
-                <p className="text-sm text-muted-foreground">{filteredJobs.length} jobs found</p>
               </div>
-  
-              {/* Sidebar filters - desktop always visible, mobile conditional */}
-              <div className={`lg:w-1/4 ${isMobileFilterOpen ? "block" : "hidden lg:block"}`}>
-                <div className="bg-white p-6 rounded-lg shadow-sm sticky top-20">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-semibold">Filters</h2>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground">
-                      Reset
-                    </Button>
-                  </div>
-  
-                  <div className="space-y-6">
-                    {/* Category filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Category</label>
-                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          <SelectItem value="Plumbing">Plumbing</SelectItem>
-                          <SelectItem value="Electrical">Electrical</SelectItem>
-                          <SelectItem value="Carpentry">Carpentry</SelectItem>
-                          <SelectItem value="Painting">Painting</SelectItem>
-                          <SelectItem value="Cleaning">Cleaning</SelectItem>
-                        </SelectContent>
-                      </Select>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-blue-50 shadow-md rounded-full px-6 font-medium"
+                >
+                  <Link href="/post-job">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Post a Job
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30 rounded-full px-6 font-medium"
+                >
+                  <Filter className="mr-2 h-5 w-5" />
+                  Browse Categories
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1440 120"
+            className="w-full h-auto fill-current text-blue-50"
+            preserveAspectRatio="none"
+          >
+            <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path>
+          </svg>
+        </div>
+      </div>
+
+      {/* Category pills */}
+      <div className="container mx-auto px-4 -mt-6 relative z-20">
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-blue-100">
+          <h2 className="text-lg font-semibold text-blue-950 mb-4">Popular Categories</h2>
+          <CategoryPills
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleCategorySelect}
+          />
+        </div>
+      </div>
+
+      {/* Featured jobs section */}
+      <div className="container mx-auto py-16 px-4">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-blue-950 mb-1">Featured Jobs</h2>
+            <p className="text-blue-600">Top opportunities that might interest you</p>
+          </div>
+          <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+            View All
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featuredJobs.map((job) => (
+            <JobCard key={job.id} job={job} featured />
+          ))}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="container mx-auto pb-20 px-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-blue-950 mb-1">All Available Jobs</h2>
+            <p className="text-blue-600">Browse and find the perfect service for your needs</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-full h-9 px-4"
+            >
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              Sort
+            </Button>
+            <Tabs defaultValue="grid" className="w-[110px]">
+              <TabsList className="h-9 bg-blue-100/50 rounded-full">
+                <TabsTrigger
+                  value="grid"
+                  className="rounded-full data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </TabsTrigger>
+                <TabsTrigger
+                  value="list"
+                  className="rounded-full data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                >
+                  <ListFilter className="h-4 w-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
+          <div className="hidden lg:block">
+            <div className="sticky top-4">
+              <div className="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
+                <JobFilters
+                  categories={categories.filter((c) => c.name !== "All Categories")}
+                  filters={filters}
+                  setFilters={setFilters}
+                  resetFilters={resetFilters}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white p-5 rounded-2xl shadow-lg border border-blue-100 lg:hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium text-blue-950">Quick Filters</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full"
+                  onClick={resetFilters}
+                >
+                  Clear
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`border-blue-200 ${
+                    selectedCategory === "All Categories"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-blue-700 hover:bg-blue-50"
+                  } rounded-full`}
+                  onClick={() => handleCategorySelect("All Categories")}
+                >
+                  All Categories
+                </Button>
+                {categories.slice(1, 5).map((category) => (
+                  <Button
+                    key={category.name}
+                    variant="outline"
+                    size="sm"
+                    className={`border-blue-200 ${
+                      selectedCategory === category.name ? "bg-blue-50 text-blue-700" : "text-blue-700 hover:bg-blue-50"
+                    } rounded-full`}
+                    onClick={() => handleCategorySelect(category.name)}
+                  >
+                    {category.name}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 flex items-center rounded-full"
+                >
+                  <Filter className="mr-1 h-3 w-3" />
+                  More Filters
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-blue-400" />
+              </div>
+              <Input
+                type="search"
+                placeholder="Search jobs..."
+                className="pl-11 py-6 border-blue-200 bg-white focus-visible:ring-blue-500 rounded-xl shadow-sm"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+            </div>
+
+            {/* Active filters display */}
+            {(filters.categories.length > 0 ||
+              filters.urgency.length > 0 ||
+              filters.jobType.length > 0 ||
+              filters.experienceLevel.length > 0 ||
+              filters.location ||
+              filters.datePosted ||
+              selectedCategory !== "All Categories") && (
+              <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-blue-700">Active Filters</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded-full text-xs px-2"
+                    onClick={resetFilters}
+                  >
+                    Clear All
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCategory !== "All Categories" && (
+                    <div className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center">
+                      Category: {selectedCategory}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() => handleCategorySelect("All Categories")}
+                      >
+                        ×
+                      </button>
                     </div>
-  
-                    {/* Location filter */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Location</label>
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="Enter location"
-                          className="pl-8"
-                          value={locationFilter}
-                          onChange={(e) => setLocationFilter(e.target.value)}
-                        />
-                        {locationFilter && (
-                          <button className="absolute right-2.5 top-2.5" onClick={() => setLocationFilter("")}>
-                            <X className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                        )}
-                      </div>
+                  )}
+
+                  {filters.categories.map((category) => (
+                    <div
+                      key={category}
+                      className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center"
+                    >
+                      {category}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            categories: filters.categories.filter((c) => c !== category),
+                          })
+                        }
+                      >
+                        ×
+                      </button>
                     </div>
-  
-                    {/* Price range filter */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium">Price Range</label>
-                        <span className="text-sm text-muted-foreground">
-                          ${priceRange[0]} - ${priceRange[1]}+
-                        </span>
-                      </div>
-                      <Slider
-                        defaultValue={[0, 500]}
-                        max={500}
-                        step={50}
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        className="py-4"
-                      />
+                  ))}
+
+                  {filters.urgency.map((urgency) => (
+                    <div
+                      key={urgency}
+                      className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center"
+                    >
+                      {urgency} Urgency
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            urgency: filters.urgency.filter((u) => u !== urgency),
+                          })
+                        }
+                      >
+                        ×
+                      </button>
                     </div>
-  
-                    {/* Apply filters button - mobile only */}
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 lg:hidden" onClick={toggleMobileFilter}>
-                      Apply Filters
-                    </Button>
-                  </div>
+                  ))}
+
+                  {filters.location && (
+                    <div className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center">
+                      Location: {filters.location}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() => setFilters({ ...filters, location: "" })}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+
+                  {filters.datePosted && (
+                    <div className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center">
+                      Posted:{" "}
+                      {filters.datePosted === "24h"
+                        ? "Last 24 hours"
+                        : filters.datePosted === "week"
+                          ? "Last 7 days"
+                          : "Last 30 days"}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() => setFilters({ ...filters, datePosted: "" })}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+
+                  {filters.jobType.map((type) => (
+                    <div
+                      key={type}
+                      className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center"
+                    >
+                      {type}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            jobType: filters.jobType.filter((t) => t !== type),
+                          })
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
+                  {filters.experienceLevel.map((level) => (
+                    <div
+                      key={level}
+                      className="bg-white text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center"
+                    >
+                      {level}
+                      <button
+                        className="ml-2 text-blue-400 hover:text-blue-600"
+                        onClick={() =>
+                          setFilters({
+                            ...filters,
+                            experienceLevel: filters.experienceLevel.filter((l) => l !== level),
+                          })
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
-  
-              {/* Jobs grid */}
-              <div className="lg:w-3/4">
-                <div className="hidden lg:flex justify-between items-center mb-6">
-                  <p className="text-sm text-muted-foreground">{filteredJobs.length} jobs found</p>
-                  <Select defaultValue="newest">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="oldest">Oldest First</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-  
+            )}
+
+            <Tabs defaultValue="grid">
+              <TabsContent value="grid" className="mt-0 animate-fade-in">
                 {filteredJobs.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredJobs.map((job) => (
-                      <JobCard key={job.id} job={job} onClick={() => openJobDetails(job)} />
+                      <JobCard key={job.id} job={job} />
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white p-8 rounded-lg text-center">
-                    <h3 className="font-semibold text-lg mb-2">No jobs found</h3>
-                    <p className="text-muted-foreground mb-4">Try adjusting your filters to find more jobs</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setCategoryFilter("all")
-                        setLocationFilter("")
-                        setPriceRange([0, 500])
-                      }}
-                    >
-                      Reset Filters
+                  <div className="text-center py-16 bg-white rounded-2xl border border-blue-100 shadow-sm">
+                    <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                      <Search className="h-8 w-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-blue-950 mb-2">No jobs found</h3>
+                    <p className="text-blue-600 max-w-md mx-auto">
+                      We couldn't find any jobs matching your current filters. Try adjusting your search criteria or
+                      browse all available jobs.
+                    </p>
+                    <Button className="mt-6 bg-blue-600 hover:bg-blue-700" onClick={resetFilters}>
+                      Clear All Filters
                     </Button>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        </main>
-  
-        {/* Job details modal */}
-        {selectedJob && <JobDetailsModal job={selectedJob} isOpen={isModalOpen} onClose={closeJobDetails} />}
-      </div>
-      
-    )} 
-        </>
+              </TabsContent>
+              <TabsContent value="list" className="mt-0 animate-fade-in">
+                {filteredJobs.length > 0 ? (
+                  <JobList jobs={filteredJobs} />
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-blue-100 shadow-sm">
+                    <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                      <Search className="h-8 w-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-blue-950 mb-2">No jobs found</h3>
+                    <p className="text-blue-600 max-w-md mx-auto">
+                      We couldn't find any jobs matching your current filters. Try adjusting your search criteria or
+                      browse all available jobs.
+                    </p>
+                    <Button className="mt-6 bg-blue-600 hover:bg-blue-700" onClick={resetFilters}>
+                      Clear All Filters
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
 
+            {filteredJobs.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6">
+                <p className="text-sm text-blue-600">
+                  Showing <strong>{filteredJobs.length}</strong> of <strong>{jobsData.length}</strong> jobs
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 rounded-full"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 bg-blue-500 text-white hover:bg-blue-600 rounded-full w-9 h-9 p-0"
+                  >
+                    1
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 rounded-full w-9 h-9 p-0"
+                  >
+                    2
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 rounded-full w-9 h-9 p-0"
+                  >
+                    3
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 rounded-full"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

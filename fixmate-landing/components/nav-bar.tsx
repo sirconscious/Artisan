@@ -38,7 +38,7 @@ export function NavBar() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Wrench className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-bold">BrickHole</span>
+            <span className="text-xl font-bold">SAM</span>
           </Link>
         </div>
 
@@ -58,7 +58,7 @@ export function NavBar() {
         </nav>
     {
       isConnected ? 
-            <div className="hidden md:flex items-center gap-4">
+            <div onClick={()=> window.location.href = "/dashboard"} className="hidden md:flex items-center gap-4 hover: cursor-pointer">
             <User/>
           </div> : <div className="hidden md:flex items-center gap-4">
           <Link href="/login" className="text-sm font-medium hover:text-blue-600 transition-colors">
@@ -82,7 +82,7 @@ export function NavBar() {
             <div className="flex flex-col gap-6 py-6">
               <Link href="/" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                 <Wrench className="h-6 w-6 text-blue-600" />
-                <span className="text-xl font-bold">BrickHole</span>
+                <span className="text-xl font-bold">Service à la maison</span>
               </Link>
 
               <nav className="flex flex-col gap-4">
